@@ -15,17 +15,26 @@ type ConfirmationResult struct {
 
 func (s *Service) ConfirmAfterBarrier(code, actor string, barrier <-chan struct{}) error {
 	<-barrier
+	// Dedup by the confirmation identity (equipment + actor): two distinct
+	// operators may each confirm the same equipment after the barrier is
+	// released, but the same operator may not consume a pending
+	// confirmation twice. Keying on code alone rejected the second operator.
+	key := confirmationKey(code, actor)
 	s.mu.Lock()
-	if s.consumed[code] > 0 {
+	if s.consumed[key] > 0 {
 		s.mu.Unlock()
 		return ErrDuplicateConsumption
 	}
-	s.consumed[code]++
+	s.consumed[key]++
 	s.mu.Unlock()
 	if _, err := s.GetEquipment(code); err != nil {
 		return err
 	}
 	return s.writeLifecycle(code, actor, "confirm-pending", "barrier confirmation consumed")
+}
+
+func confirmationKey(code, actor string) string {
+	return code + "\x00" + actor
 }
 
 func (s *Service) RunBarrierConfirmations(code string, actors []string, barrier <-chan struct{}) []ConfirmationResult {
