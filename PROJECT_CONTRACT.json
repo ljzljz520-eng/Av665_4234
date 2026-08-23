@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "production_loc": 2306,
+    "production_files": 21,
+    "production_packages": 13,
+    "test_files": 13,
+    "production_functions": 189,
+    "decision_points": 316
+  },
+  "persistence": {
+    "module": "go.etcd.io/bbolt",
+    "entities": [
+      "EquipmentRecord",
+      "AuditEvent",
+      "Attachment",
+      "Review"
+    ],
+    "reopen_test": "TestPersistenceSurvivesReopen"
+  },
+  "workflows": [
+    {
+      "steps": [
+        "登记器材与附件",
+        "提交复核",
+        "批准并确认状态",
+        "归档操作记录"
+      ],
+      "test": "TestWorkflowCreateReviewArchive"
+    },
+    {
+      "steps": [
+        "按编号或位置搜索",
+        "选择器材记录",
+        "协作更新责任人",
+        "发布变更摘要"
+      ],
+      "test": "TestWorkflowSearchUpdatePublish"
+    },
+    {
+      "steps": [
+        "导入CSV",
+        "校验字段与重复编号",
+        "持久化有效记录",
+        "导出校验报告"
+      ],
+      "test": "TestWorkflowImportReport"
+    }
+  ]
+}
